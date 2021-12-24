@@ -1,8 +1,10 @@
-import pygame
-import os
-import time
 import random
+
+import pygame.event
+
 from Classes import *
+
+import time
 
 # ----------------------------------------------------------------------------------
 
@@ -11,9 +13,9 @@ pygame.mixer.init()
 pygame.init()
 # constants
 WIDTH, HEIGHT = 400, 900
-FPS = 60
-WHITE, BLACK, RED, YELLOW, GREEN, GREY, GOLD = (255, 255, 255), (0, 0, 0), (255, 0, 0), (255, 255, 0),\
-                                                 (0, 255, 0), (69, 62, 49), (207, 172, 21)
+
+WHITE, BLACK, RED, YELLOW, GREEN, GREY, GOLD = (255, 255, 255), (0, 0, 0), (255, 0, 0), (255, 255, 0), \
+                                               (0, 255, 0), (69, 62, 49), (207, 172, 21)
 
 # spaceship constants                to do: add medium, advanced, master if needed
 SPACESHIP_BASIC_WIDTH, SPACESHIP_BASIC_HEIGHT = 55, 40
@@ -34,15 +36,15 @@ meteor_int_img = pygame.transform.scale(pygame.image.load(os.path.join('Assets',
 meteor_boss_img = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'meteor_3.png')), (200, 200))
 basic_bullet_img = pygame.transform.scale(
     pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_img.png')), 90), (4, 10))
-advanced_bullet_img = pygame.transform.scale(pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_advanced.png')), 270),
-                                             (10, 30))
+advanced_bullet_img = pygame.transform.scale(
+    pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_advanced.png')), 270),
+    (10, 30))
 master_bullet_img = pygame.transform.scale(
     pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_master.png')), 90), (6, 100))
 
 # Sounds.  To do: fix bugs
 pygame.mixer.music.load(os.path.join('Assets', "music.mp3"))
 pygame.mixer.music.play(-1)
-
 
 # display
 pygame.display.set_caption("Space Levels")
@@ -52,8 +54,11 @@ level_font = pygame.font.SysFont("Impact", 100)
 
 
 # -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 
-def main():
+def main(FPS=60):
     run = True
     clock = pygame.time.Clock()
     enemies = [Enemy(random.randrange(50, WIDTH - 100), -100, meteor_basic_img)]
@@ -61,6 +66,7 @@ def main():
 
     level, lives, hp = 1, 10, 10
     wave_size = 5
+
 
     # create visuals
     def draw_window():
@@ -95,13 +101,13 @@ def main():
 
         # player_level = 2
         if player.image == spaceship_advanced:
-            if player.player_score >= 800:
+            if player.player_score >= 500:
                 player.level_up(spaceship_master, master_bullet_img)
                 Player.level_up_shoot_speed()
 
         # player_level = 1
         if player.image == spaceship_medium:
-            if player.player_score >= 400:
+            if player.player_score >= 250:
                 player.level_up(spaceship_advanced, advanced_bullet_img)
                 Player.level_up_shoot_speed()
 
@@ -113,6 +119,7 @@ def main():
         pygame.display.update()
 
     while run:
+
         clock.tick(FPS)
         # append number of enemies depending on level
         if len(enemies) == 0:
@@ -167,6 +174,75 @@ def main():
             run = False
 
 
-if __name__ == '__main__':
-    main()
+# ----------------------------------------------------------------------
 
+def main_menu(fps=60):
+    menu = True
+    pygame.display.set_caption("Main Menu")
+    start_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                                ('Assets', 'start_button_img.png')), (270, 90))
+    settings_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                                   ('Assets', 'settings_button_img.png')), (270, 90))
+
+    while menu:
+
+        window.blit(bg, (0, 0))
+        start_button = Button(window.get_width()/2 - start_button_img.get_width()/2, 200, start_button_img)
+        settings_button = Button(window.get_width()/2 - start_button_img.get_width()/2, 300, settings_button_img)
+        if start_button.draw(window):
+            main(fps)
+        if settings_button.draw(window):
+            settings()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                menu = False
+                pygame.quit()
+
+        pygame.display.update()
+        clock = pygame.time.Clock()
+        clock.tick(60)
+
+
+def settings():
+    setting = True
+    pygame.display.set_caption("Settings")
+    easy_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                                ('Assets', 'easy_button.png')), (90, 60))
+    medium_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                                   ('Assets', 'medium_button.png')), (90, 60))
+    insane_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                                   ('Assets', 'insane_button.png')), (90, 60))
+
+    while setting:
+
+        window.blit(bg, (0, 0))
+        easy_button = Button(window.get_width()/4-35, 400, easy_button_img)
+        medium_button = Button(window.get_width()*2/4-35, 400, medium_button_img)
+        insane_button = Button(window.get_width()*3/4-35, 400, insane_button_img)
+        if easy_button.draw(window):
+            fps = 60
+            setting = False
+        if medium_button.draw(window):
+            fps = 100
+            setting = False
+        if insane_button.draw(window):
+            fps = 200
+            setting = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                setting = False
+                pygame.quit()
+
+        pygame.display.update()
+        clock = pygame.time.Clock()
+        clock.tick(60)
+
+    return main_menu(fps)
+
+
+
+
+
+if __name__ == '__main__':
+    main_menu()

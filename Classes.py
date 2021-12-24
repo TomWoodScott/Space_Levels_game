@@ -1,14 +1,13 @@
 import os.path
-import time
-
 import pygame
+from pygame import mixer
 
 
 class Ship:
     pygame.mixer.init()
     COOL_DOWN = 30
-    BULLETSOUND = pygame.mixer.Sound(os.path.join('Assets', "Game_bullet.wav"))
-    HITSOUND = pygame.mixer.Sound(os.path.join('Assets', "Game_hit.wav"))
+    BULLETSOUND = mixer.Sound(os.path.join('Assets', "Game_bullet.wav"))
+    HITSOUND = mixer.Sound(os.path.join('Assets', "Game_hit.wav"))
 
     def __init__(self, x, y, spaceship_img):
         self.x = x
@@ -47,6 +46,7 @@ class Player(Ship):
         self.player_score = 0
         self.power_bar = 0
         self.power_bar_times = 0
+        self.level = 1
 
     def move_bullets(self, enemies):
         self.bullet_cool_down()
@@ -59,11 +59,12 @@ class Player(Ship):
             else:
                 for enemy in enemies:
                     for b in self.bullets:
+
                         if b.collision(enemy):
                             self.power_bar += 1
                             enemy.health -= self.bullet_dmg
                             if enemy.health <= 0:
-                                self.HITSOUND.play()
+                                Ship.HITSOUND.play()
                                 self.player_score += enemy.score
                                 if enemies:
                                     enemies.remove(enemy)
@@ -71,6 +72,7 @@ class Player(Ship):
                             self.bullets.remove(b)
 
     def level_up(self, image, bullet_img):
+        self.level += 1
         self.image = image
         self.mask = pygame.mask.from_surface(self.image)
         self.bullet_dmg += 1
@@ -82,10 +84,21 @@ class Player(Ship):
     # to do: depending on spaceship level
     def shoot(self):
         if self.cool_down_timer == 0:
-            bullet = Bullet(self.x + self.width / 2 - 1, self.y, self.bullet_img)
-            self.bullets.append(bullet)
+            if self.level < 3:
+                bullet = Bullet(self.x + self.width / 2 - 1, self.y, self.bullet_img)
+                self.bullets.append(bullet)
+
+            elif self.level < 5:
+                bullet1 = Bullet(self.x + 2, self.y, self.bullet_img)
+                bullet2 = Bullet((self.x + self.width) - 17, self.y, self.bullet_img)
+                self.bullets.append(bullet1)
+                self.bullets.append(bullet2)
+            else:
+                pass
+            pygame.mixer.Sound.stop(Player.BULLETSOUND)
+            Player.BULLETSOUND.play()
             self.cool_down_timer = 1
-        if self.power_bar == 20:
+        if self.power_bar >= 20:
             for i in range(0, 400, 10):
                 bullet = Bullet(i, self.y, self.bullet_img)
                 self.bullets.append(bullet)
@@ -113,11 +126,10 @@ class Player(Ship):
             player.y += player.velocity
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             player.shoot()
-            Player.BULLETSOUND.play()
+
 
 
 class Bullet:
-
 
     def __init__(self, x, y, bullet_img):
         self.x = x
@@ -149,6 +161,7 @@ class Enemy:
         self.damage = dmg
         self.vel = vel
         self.score = score
+        self.weight = 10
 
     def draw(self, window):
         window.blit(self.image, (self.x, self.y))
@@ -156,4 +169,25 @@ class Enemy:
     def move(self):
         self.y += self.vel
 
+
+class Button:
+    def __init__(self, x, y, image):
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.clicked = False
+
+
+    def draw(self, window):
+        action = False
+        mouse_position = pygame.mouse.get_pos()
+        if self.rect.collidepoint(mouse_position):
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
+
+        window.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
 
