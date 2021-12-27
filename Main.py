@@ -1,3 +1,4 @@
+import json
 import random
 
 import pygame.event
@@ -58,32 +59,31 @@ level_font = pygame.font.SysFont("Impact", 100)
 # -------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------
 
-def main(FPS=60):
+def main(FPS=60, load=False, load_the_player=None, level=1):
     run = True
     clock = pygame.time.Clock()
-    enemies = [Enemy(random.randrange(50, WIDTH - 100), -100, meteor_basic_img)]
-    player_dic = {0: Player(SPACESHIP_BASIC_START_X, SPACESHIP_BASIC_START_Y, spaceship_medium, basic_bullet_img)}
+    Enemy.append(Enemy(random.randrange(50, WIDTH - 100), -100, meteor_basic_img))
 
-    level, lives, hp = 1, 10, 10
-    wave_size = 5
-
+    if load:
+        player = Player(load_the_player)
+    else:
+        player = Player(SPACESHIP_BASIC_START_X, SPACESHIP_BASIC_START_Y, spaceship_medium, basic_bullet_img)
 
     # create visuals
     def draw_window():
-
-        player = player_dic[0]
         window.blit(bg, (0, 0))
-        lives_label = main_font.render("Lives: " + str(hp), 1, WHITE)
-        level_label = main_font.render("Level: " + str(level), 1, WHITE)
+        lives_label = main_font.render("Lives: " + str(player.health), 1, WHITE)
+        level_label = main_font.render("Level: " + str(player.level), 1, WHITE)
         game_over_label = level_font.render("GAME OVER", 1, WHITE)
 
         red_hp = pygame.draw.rect(window, RED, (WIDTH / 2 - 100, HEIGHT - 50, 200, 20))
-        green_hp = pygame.draw.rect(window, GREEN, (WIDTH / 2 - 100, HEIGHT - 50, 200 * hp / lives, 20))
+        green_hp = pygame.draw.rect(window, GREEN,
+                                    (WIDTH / 2 - 100, HEIGHT - 50, 200 * player.health / player.MAX_HP, 20))
 
         window.blit(level_label, (WIDTH - lives_label.get_width() - 10, 10))
         window.blit(lives_label, (10, 10))
         window.blit(window, red_hp, (WIDTH / 2 - 100, HEIGHT - 50, 200, 20))
-        window.blit(window, green_hp, (WIDTH / 2 - 100, HEIGHT - 50, 200 * hp / lives, 20))
+        window.blit(window, green_hp, (WIDTH / 2 - 100, HEIGHT - 50, 200, 20))
 
         power_bar_dull = pygame.draw.rect(window, GREY, (WIDTH / 2 - 100, HEIGHT - 22, 200, 10))
         window.blit(window, power_bar_dull, (WIDTH - 24, HEIGHT - 50, 5, 20))
@@ -92,28 +92,16 @@ def main(FPS=60):
         power_bar_inside = pygame.draw.rect(window, GOLD, (WIDTH / 2 - 100, HEIGHT - 22, temp_power_bar, 10))
         window.blit(window, power_bar_inside, (WIDTH - 24, HEIGHT - 50, 5, 20))
 
-        if hp <= 0:
+        if player.health <= 0:
             window.blit(bg, (0, 0))
             window.blit(game_over_label,
                         (WIDTH / 2 - game_over_label.get_width() / 2, HEIGHT / 2 - game_over_label.get_height() / 2))
 
-        # to do: add score above, depending on score choose index appropriately
-
-        # player_level = 2
-        if player.image == spaceship_advanced:
-            if player.player_score >= 500:
-                player.level_up(spaceship_master, master_bullet_img)
-                Player.level_up_shoot_speed()
-
-        # player_level = 1
-        if player.image == spaceship_medium:
-            if player.player_score >= 250:
-                player.level_up(spaceship_advanced, advanced_bullet_img)
-                Player.level_up_shoot_speed()
+        Player.level_time(player,
+                          {2: [spaceship_advanced, advanced_bullet_img], 3: [spaceship_master, master_bullet_img]})
 
         player.draw(window)
-
-        for enemy in enemies:
+        for enemy in Enemy.ENEMIES:
             enemy.draw(window)
 
         pygame.display.update()
@@ -122,9 +110,9 @@ def main(FPS=60):
 
         clock.tick(FPS)
         # append number of enemies depending on level
-        if len(enemies) == 0:
+        if len(Enemy.ENEMIES) == 0:
             level += 1
-            wave_size = int(wave_size + 5)
+            wave_size = level * 5
 
             # every five levels have a boss level
             if level % 5 != 0:
@@ -139,10 +127,10 @@ def main(FPS=60):
                                           random.randrange(-110, -100),
                                           meteor_boss_img, vel=0.5, health=10, dmg=6, score=50)}
                     meteor = enemy_dic[random.choice([0, 1])]
-                    enemies.append(meteor)
+                    Enemy.append(meteor)
             else:
                 meteor = enemy_dic[2]
-                enemies.append(meteor)
+                Enemy.append(meteor)
 
         # quit game
         for event in pygame.event.get():
@@ -151,24 +139,21 @@ def main(FPS=60):
                 pygame.quit()
 
         # enemies movement plus damage
-        for enemy in enemies:
-            enemy.move()
-            if enemy.y >= HEIGHT:
-                hp -= enemy.damage
-                enemies.remove(enemy)
+        for enemy in Enemy.ENEMIES:
+            enemy.move(player)
 
         # Player static method overseeing player movement and appending bullets
-        Player.spaceship_movement(pygame.key.get_pressed(), player_dic[0])
+        Player.spaceship_movement(pygame.key.get_pressed(), player)
 
         # player method overseeing the movement of bullets, enemy-bullet collisions, removing enemies, removing bullets,
         # incrementing score and power bar
-        player_dic[0].move_bullets(enemies)
+        player.move_bullets()
         draw_window()
 
         # remove enemies for cleaner display, re_draw window (now with "game over"), break out of while loop
-        if hp <= 0:
-            for enemy in enemies:
-                enemies.remove(enemy)
+        if player.health <= 0:
+            for enemy in Enemy.ENEMIES:
+                Enemy.ENEMIES.remove(enemy)
             draw_window()
             time.sleep(5)
             run = False
@@ -187,8 +172,8 @@ def main_menu(fps=60):
     while menu:
 
         window.blit(bg, (0, 0))
-        start_button = Button(window.get_width()/2 - start_button_img.get_width()/2, 200, start_button_img)
-        settings_button = Button(window.get_width()/2 - start_button_img.get_width()/2, 300, settings_button_img)
+        start_button = Button(window.get_width() / 2 - start_button_img.get_width() / 2, 200, start_button_img)
+        settings_button = Button(window.get_width() / 2 - start_button_img.get_width() / 2, 300, settings_button_img)
         if start_button.draw(window):
             main(fps)
         if settings_button.draw(window):
@@ -208,18 +193,18 @@ def settings():
     setting = True
     pygame.display.set_caption("Settings")
     easy_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                                ('Assets', 'easy_button.png')), (90, 60))
+                                                               ('Assets', 'easy_button.png')), (270, 90))
     medium_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                                   ('Assets', 'medium_button.png')), (90, 60))
+                                                                 ('Assets', 'medium_button.png')), (270, 90))
     insane_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                                   ('Assets', 'insane_button.png')), (90, 60))
+                                                                 ('Assets', 'insane_button.png')), (270, 90))
 
     while setting:
 
         window.blit(bg, (0, 0))
-        easy_button = Button(window.get_width()/4-35, 400, easy_button_img)
-        medium_button = Button(window.get_width()*2/4-35, 400, medium_button_img)
-        insane_button = Button(window.get_width()*3/4-35, 400, insane_button_img)
+        easy_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 400, easy_button_img)
+        medium_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 500, medium_button_img)
+        insane_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 600, insane_button_img)
         if easy_button.draw(window):
             fps = 60
             setting = False
@@ -241,7 +226,38 @@ def settings():
     return main_menu(fps)
 
 
+def save_load():
+    save_load_level = True
+    pygame.display.set_caption("Settings")
+    save_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                               ('Assets', 'save_button.png')), (270, HEIGHT + 200))
+    load_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                               ('Assets', 'load_button.png')), (270, HEIGHT + 100))
 
+    while save_load_level:
+
+        window.blit(bg, (0, 0))
+        save_button = Button(window.get_width() / 2 - save_button_img.get_width() / 2, 400, save_button_img)
+        load_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 500, load_button_img)
+
+        if save_button.draw(window):
+            with open('space_levels_data.txt', 'w') as space_levels_data:
+                json.dump(data, space_levels_data)
+
+        if load_button.draw(window):
+            with open('space_levels_data.txt') as space_levels_data:
+                data = json.load(space_levels_data)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                save_load_level = False
+                pygame.quit()
+
+        pygame.display.update()
+        clock = pygame.time.Clock()
+        clock.tick(60)
+
+    return main(load=True, load_the_player=data, level=1)
 
 
 if __name__ == '__main__':
