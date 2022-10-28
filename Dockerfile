@@ -1,6 +1,6 @@
 # Dockerfile -- a blueprint for building images, 
 # Image -- a template for running containers   (docker build -t space-game-img .) 
-# Container -- the running procces (docker run space-game-img)
+# Container -- the running procces (docker run -it --rm -e DISPLAY=unix$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --device /dev/snd space-game-img)
 
 FROM python:3.10.6
 
