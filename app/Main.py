@@ -243,13 +243,15 @@ def save_load(stats=None, fps=None, save_load_level = True):
                                                                ('Assets', 'save_button.png')), (270, 90))
     load_button_img = pygame.transform.scale(pygame.image.load(os.path.join
                                                                ('Assets', 'load_button.png')), (270, 90))
+    remove_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                               ('Assets', 'remove_button.png')), (270, 90))
 
     while save_load_level:
 
         window.blit(bg, (0, 0))
         save_button = Button(window.get_width() / 2 - save_button_img.get_width() / 2, 400, save_button_img)
         load_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 500, load_button_img)
-        clear_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 600, clear_button_img)
+        clear_button = Button(window.get_width() / 2 - remove_button_img.get_width() / 2, 600, remove_button_img)
 #        i, j = 0, 0
         if save_button.draw(window):
 #       if i == 0:
