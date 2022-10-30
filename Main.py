@@ -1,10 +1,7 @@
-import json
+import pickle
 import random
-
 import pygame.event
-
 from Classes import *
-
 import time
 
 # ----------------------------------------------------------------------------------
@@ -19,19 +16,12 @@ WHITE, BLACK, RED, YELLOW, GREEN, GREY, GOLD = (255, 255, 255), (0, 0, 0), (255,
                                                (0, 255, 0), (69, 62, 49), (207, 172, 21)
 
 # spaceship constants                to do: add medium, advanced, master if needed
-SPACESHIP_BASIC_WIDTH, SPACESHIP_BASIC_HEIGHT = 55, 40
-SPACESHIP_BASIC_START_X, SPACESHIP_BASIC_START_Y = WIDTH / 2 - SPACESHIP_BASIC_WIDTH / 2, HEIGHT - 100
+
+SPACESHIP_BASIC_START_X, SPACESHIP_BASIC_START_Y = WIDTH / 2 - 55 / 2, HEIGHT - 100
 SPACESHIP_BASIC_VELOCITY = 5
 # images
 bg = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'space.png')), (WIDTH, HEIGHT))
-spaceship_basic = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'spaceship_basic.png')),
-                                         (SPACESHIP_BASIC_WIDTH, SPACESHIP_BASIC_HEIGHT))
-spaceship_medium = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'spaceship_medium.png')),
-                                          (SPACESHIP_BASIC_WIDTH, SPACESHIP_BASIC_HEIGHT))
-spaceship_advanced = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'spaceship_advanced.png')),
-                                            (SPACESHIP_BASIC_WIDTH + 10, SPACESHIP_BASIC_HEIGHT))
-spaceship_master = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'spaceship_master.png')),
-                                          (SPACESHIP_BASIC_WIDTH + 10, SPACESHIP_BASIC_HEIGHT))
+
 meteor_basic_img = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'meteor_4.png')), (100, 80))
 meteor_int_img = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'meteor_2.png')), (75, 75))
 meteor_boss_img = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'meteor_3.png')), (200, 200))
@@ -42,6 +32,8 @@ advanced_bullet_img = pygame.transform.scale(
     (10, 30))
 master_bullet_img = pygame.transform.scale(
     pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_master.png')), 90), (6, 100))
+m_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                        ('Assets', 'm_button.png')), (90, 90))
 
 # Sounds.  To do: fix bugs
 pygame.mixer.music.load(os.path.join('Assets', "music.mp3"))
@@ -59,15 +51,17 @@ level_font = pygame.font.SysFont("Impact", 100)
 # -------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------
 
-def main(FPS=60, load=False, load_the_player=None, level=1):
+def main(FPS=60, data_to_load=None, level=0):
     run = True
     clock = pygame.time.Clock()
     Enemy.append(Enemy(random.randrange(50, WIDTH - 100), -100, meteor_basic_img))
 
-    if load:
-        player = Player(load_the_player)
+    if data_to_load is not None:
+        player = Player(SPACESHIP_BASIC_START_X, SPACESHIP_BASIC_START_Y, data_to_load[0], data_to_load[1],
+                        data_to_load[2],
+                        data_to_load[3], data_to_load[4], data_to_load[5], data_to_load[6], data_to_load[7])
     else:
-        player = Player(SPACESHIP_BASIC_START_X, SPACESHIP_BASIC_START_Y, spaceship_medium, basic_bullet_img)
+        player = Player(SPACESHIP_BASIC_START_X, SPACESHIP_BASIC_START_Y)
 
     # create visuals
     def draw_window():
@@ -75,6 +69,10 @@ def main(FPS=60, load=False, load_the_player=None, level=1):
         lives_label = main_font.render("Lives: " + str(player.health), 1, WHITE)
         level_label = main_font.render("Level: " + str(player.level), 1, WHITE)
         game_over_label = level_font.render("GAME OVER", 1, WHITE)
+
+        m_button = Button(5, HEIGHT - 80, m_button_img)
+        if m_button.draw(window):
+            save_load(player.stats())
 
         red_hp = pygame.draw.rect(window, RED, (WIDTH / 2 - 100, HEIGHT - 50, 200, 20))
         green_hp = pygame.draw.rect(window, GREEN,
@@ -97,8 +95,7 @@ def main(FPS=60, load=False, load_the_player=None, level=1):
             window.blit(game_over_label,
                         (WIDTH / 2 - game_over_label.get_width() / 2, HEIGHT / 2 - game_over_label.get_height() / 2))
 
-        Player.level_time(player,
-                          {2: [spaceship_advanced, advanced_bullet_img], 3: [spaceship_master, master_bullet_img]})
+        Player.level_time(player)
 
         player.draw(window)
         for enemy in Enemy.ENEMIES:
@@ -161,7 +158,7 @@ def main(FPS=60, load=False, load_the_player=None, level=1):
 
 # ----------------------------------------------------------------------
 
-def main_menu(fps=60):
+def main_menu(fps=60, data_to_load=None):
     menu = True
     pygame.display.set_caption("Main Menu")
     start_button_img = pygame.transform.scale(pygame.image.load(os.path.join
@@ -174,10 +171,11 @@ def main_menu(fps=60):
         window.blit(bg, (0, 0))
         start_button = Button(window.get_width() / 2 - start_button_img.get_width() / 2, 200, start_button_img)
         settings_button = Button(window.get_width() / 2 - start_button_img.get_width() / 2, 300, settings_button_img)
+
         if start_button.draw(window):
-            main(fps)
+            main(fps, data_to_load)
         if settings_button.draw(window):
-            settings()
+            settings(data_to_load=None)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -189,7 +187,7 @@ def main_menu(fps=60):
         clock.tick(60)
 
 
-def settings():
+def settings(data_to_load=None):
     setting = True
     pygame.display.set_caption("Settings")
     easy_button_img = pygame.transform.scale(pygame.image.load(os.path.join
@@ -198,6 +196,8 @@ def settings():
                                                                  ('Assets', 'medium_button.png')), (270, 90))
     insane_button_img = pygame.transform.scale(pygame.image.load(os.path.join
                                                                  ('Assets', 'insane_button.png')), (270, 90))
+    load_button_img = pygame.transform.scale(pygame.image.load(os.path.join
+                                                               ('Assets', 'load_button.png')), (270, 90))
 
     while setting:
 
@@ -205,6 +205,8 @@ def settings():
         easy_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 400, easy_button_img)
         medium_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 500, medium_button_img)
         insane_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 600, insane_button_img)
+        load_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 700, load_button_img)
+
         if easy_button.draw(window):
             fps = 60
             setting = False
@@ -214,6 +216,15 @@ def settings():
         if insane_button.draw(window):
             fps = 200
             setting = False
+        if load_button.draw(window):
+            name = input(f'Please enter user name: ') + '.pkl'
+            try:
+                with open(name, 'rb') as load_game:
+                    data = pickle.load(load_game)
+                    main_menu(data_to_load=data)
+            except FileNotFoundError:
+                print(f'{name[:-4]} is not a save file')
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 setting = False
@@ -223,30 +234,50 @@ def settings():
         clock = pygame.time.Clock()
         clock.tick(60)
 
-    return main_menu(fps)
+    return main_menu(fps, data_to_load)
 
 
-def save_load():
+def save_load(stats=None, fps=None):
+    print(stats)
     save_load_level = True
     pygame.display.set_caption("Settings")
     save_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                               ('Assets', 'save_button.png')), (270, HEIGHT + 200))
+                                                               ('Assets', 'save_button.png')), (270, 90))
     load_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                               ('Assets', 'load_button.png')), (270, HEIGHT + 100))
+                                                               ('Assets', 'load_button.png')), (270, 90))
 
     while save_load_level:
 
         window.blit(bg, (0, 0))
         save_button = Button(window.get_width() / 2 - save_button_img.get_width() / 2, 400, save_button_img)
         load_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 500, load_button_img)
-
+        clear_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 600, load_button_img)
+        i, j = 0, 0
         if save_button.draw(window):
-            with open('space_levels_data.txt', 'w') as space_levels_data:
-                json.dump(data, space_levels_data)
+            if i == 0:
+                i += 1
+                name = input(f'Please enter user name: ') + '.pkl'
+                with open(name, 'wb') as save_game:
+                    pickle.dump(stats, save_game)
 
         if load_button.draw(window):
-            with open('space_levels_data.txt') as space_levels_data:
-                data = json.load(space_levels_data)
+            if j == 0:
+                name = input(f'Please enter user name: ') + '.pkl'
+                try:
+                    with open(name, 'rb') as load_game:
+                        data = pickle.load(load_game)
+                        main_menu(data_to_load=data)
+                except FileNotFoundError:
+                    print(f'{name[:-4]} does not exist, please try again')
+                j += 1
+
+        if clear_button.draw(window):
+            name = input(f'Please enter the user you would like to clear: ') + '.pkl'
+            try:
+                with open(name, 'rb') as file:
+                    file.close()
+            except FileNotFoundError:
+                print(f'{name[:-4]} does not exist, please try again')
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

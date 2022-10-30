@@ -1,4 +1,5 @@
 import os.path
+import pickle
 import pygame
 from pygame import mixer
 
@@ -9,14 +10,29 @@ class Ship:
     MAX_HP = 10
     BULLET_SOUND = mixer.Sound(os.path.join('Assets', "Game_bullet.wav"))
     HIT_SOUND = mixer.Sound(os.path.join('Assets', "Game_hit.wav"))
+    SPACESHIP_BASIC_WIDTH, SPACESHIP_BASIC_HEIGHT = 55, 40
+    spaceship_medium = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'spaceship_medium.png')),
+                                          (55, 40))
+    spaceship_advanced = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'spaceship_advanced.png')),
+                                            (65, 40))
+    spaceship_master = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'spaceship_master.png')),
+                                          (75, 50))
+    basic_bullet_img = pygame.transform.scale(
+        pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_img.png')), 90), (4, 10))
+    advanced_bullet_img = pygame.transform.scale(
+        pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_advanced.png')), 270),
+        (10, 30))
+    master_bullet_img = pygame.transform.scale(
+        pygame.transform.rotate(pygame.image.load(os.path.join('Assets', 'bullet_master.png')), 90), (6, 100))
 
-    def __init__(self, x, y, spaceship_img):
+    images_dic = {1: [spaceship_medium, basic_bullet_img], 2: [spaceship_advanced, advanced_bullet_img],
+                  3: [spaceship_master, master_bullet_img]}
+
+    def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.image = spaceship_img
         self.bullets = []
         self.cool_down_timer = 0
-
 
     def bullet_cool_down(self):
         if self.cool_down_timer >= self.COOL_DOWN:
@@ -27,22 +43,36 @@ class Ship:
 
 class Player(Ship):
 
-    def __init__(self, x, y, spaceship_img, bullet_img, width=55, height=40, health=10, score=0, level=1,
+    def __init__(self, x, y,  width=55, height=40, health=10, score=0, level=1,
                  bullet_dmg=1, velocity=5, bullet_vel=-20):
-        super().__init__(x, y, spaceship_img)
-        self.mask = pygame.mask.from_surface(self.image)
+
+        super().__init__(x, y)
+
         self.level = level
         self.health = health
-        self.bullet_img = bullet_img
+
         self.velocity = velocity
         self.bullet_vel = bullet_vel
         self.width = width
         self.height = height
         self.bullet_dmg = bullet_dmg
         self.player_score = score
-
         self.power_bar = 0
+
         self.spaceship_image_count = 0
+        if self.level == 1:
+            self.image = Player.images_dic[1][0]
+            self.bullet_img = Player.images_dic[1][1]
+        elif self.level == 2:
+            self.image = Player.images_dic[2][0]
+            self.bullet_img = Player.images_dic[2][1]
+            Player.COOL_DOWN -= 10
+        elif self.level == 3:
+            self.image = Player.images_dic[3][0]
+            self.bullet_img = Player.images_dic[3][1]
+            Player.COOL_DOWN -= 20
+
+        self.mask = pygame.mask.from_surface(self.image)
 
     def draw(self, window):
         window.blit(self.image, (self.x, self.y))
@@ -76,15 +106,20 @@ class Player(Ship):
                                 print(self.player_score)
                             self.bullets.remove(b)
 
-    def level_time(self, images_dic):
+    def level_time(self):
         # TO DO: condense into 1 statement, maybe combing level_time with level_up
         if self.level == 2:
             if self.player_score >= 50:
-                self.level_up(images_dic[self.level + 1][0], images_dic[self.level + 1][1])
+                self.level_up(Player.images_dic[self.level + 1][0], Player.images_dic[self.level + 1][1])
 
         if self.level == 1:
             if self.player_score >= 30:
-                self.level_up(images_dic[self.level + 1][0], images_dic[self.level + 1][1])
+                self.level_up(Player.images_dic[self.level + 1][0], Player.images_dic[self.level + 1][1])
+
+        if self.level == 0 and self.player_score == 0:
+            self.image = Player.images_dic[self.level + 1][0]
+            self.bullet_img = Player.images_dic[self.level + 1][1]
+
 
     def level_up(self, image, bullet_img):
         self.level += 1
@@ -97,6 +132,7 @@ class Player(Ship):
         self.bullet_vel -= 10
         self.bullet_img = bullet_img
         self.level_up_shoot_speed()
+        print("LEVEL UP")
 
     # to do: depending on spaceship level
     def shoot(self):
@@ -122,6 +158,12 @@ class Player(Ship):
                 self.bullets.append(bullet)
             self.power_bar = 0
 
+    def stats(self):
+        stats_list = [self.width, self.height, self.health,  self.player_score, self.level, self.bullet_dmg,
+                              self.velocity, self.bullet_vel]
+
+        return stats_list
+
     @classmethod
     def level_up_shoot_speed(cls):
         cls.COOL_DOWN -= 10
@@ -144,7 +186,6 @@ class Player(Ship):
             player.y += player.velocity
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             player.shoot()
-
 
 
 class Bullet:
@@ -196,7 +237,6 @@ class Enemy:
         cls.ENEMIES.append(enemy)
 
 
-
 class Button:
     def __init__(self, x, y, image):
         self.image = image
@@ -217,3 +257,17 @@ class Button:
 
         return action
 
+
+class Save_Load_System:
+    def __init__(self, file_extension, save_folder):
+        self.file_extension = file_extension
+        self.save_folder = save_folder
+
+    def save_data(self, data, name):
+        data_file = open(self.save_folder + "/" + name + self.file_extension, 'wb')
+        pickle.dump(data, data_file)
+
+    def load_data(self, name):
+        data_file = open(self.save_folder + "/" + name + self.file_extension, 'rb')
+        data = pickle.load(data_file)
+        return data
