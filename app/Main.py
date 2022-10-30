@@ -1,8 +1,6 @@
-import pickle
-import random
+import pickle, random, time, json
 import pygame.event
 from Classes import *
-import time
 
 # ----------------------------------------------------------------------------------
 
@@ -51,8 +49,7 @@ level_font = pygame.font.SysFont("Impact", 100)
 # -------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------
 
-def main(FPS=60, data_to_load=None, level=0):
-    run = True
+def main(FPS=60, data_to_load=None, level=0, run = True):
     clock = pygame.time.Clock()
     Enemy.append(Enemy(random.randrange(50, WIDTH - 100), -100, meteor_basic_img))
 
@@ -187,8 +184,8 @@ def main_menu(fps=60, data_to_load=None):
         clock.tick(60)
 
 
-def settings(data_to_load=None):
-    setting = True
+def settings(data_to_load=None, setting = True):
+    main(run=False)
     pygame.display.set_caption("Settings")
     easy_button_img = pygame.transform.scale(pygame.image.load(os.path.join
                                                                ('Assets', 'easy_button.png')), (270, 90))
@@ -237,9 +234,10 @@ def settings(data_to_load=None):
     return main_menu(fps, data_to_load)
 
 
-def save_load(stats=None, fps=None):
-    print(stats)
-    save_load_level = True
+def save_load(stats=None, fps=None, save_load_level = True):
+
+    main(run=False)
+    
     pygame.display.set_caption("Settings")
     save_button_img = pygame.transform.scale(pygame.image.load(os.path.join
                                                                ('Assets', 'save_button.png')), (270, 90))
@@ -251,25 +249,27 @@ def save_load(stats=None, fps=None):
         window.blit(bg, (0, 0))
         save_button = Button(window.get_width() / 2 - save_button_img.get_width() / 2, 400, save_button_img)
         load_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 500, load_button_img)
-        clear_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 600, load_button_img)
-        i, j = 0, 0
+        clear_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 600, clear_button_img)
+#        i, j = 0, 0
         if save_button.draw(window):
-            if i == 0:
-                i += 1
-                name = input(f'Please enter user name: ') + '.pkl'
-                with open(name, 'wb') as save_game:
-                    pickle.dump(stats, save_game)
+#       if i == 0:
+#       i += 1
+            name = input('Please enter user name: ')
+            stats['name'] = name
+            print(stats)
+            with open('save.json', 'w') as save_game:
+                json.dump(stats, save_game, indent=4)
 
         if load_button.draw(window):
-            if j == 0:
-                name = input(f'Please enter user name: ') + '.pkl'
-                try:
-                    with open(name, 'rb') as load_game:
-                        data = pickle.load(load_game)
-                        main_menu(data_to_load=data)
-                except FileNotFoundError:
-                    print(f'{name[:-4]} does not exist, please try again')
-                j += 1
+#            if j == 0:
+            name = input(f'Please enter user name: ')
+            try:
+                with open(name, 'r') as load_game:
+                    data = json.load(load_game)
+                    main_menu(data_to_load=data)
+            except FileNotFoundError:
+                print(f'{name[:-4]} does not exist, please try again')
+#                j += 1
 
         if clear_button.draw(window):
             name = input(f'Please enter the user you would like to clear: ') + '.pkl'

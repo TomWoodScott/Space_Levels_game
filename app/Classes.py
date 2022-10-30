@@ -159,10 +159,10 @@ class Player(Ship):
             self.power_bar = 0
 
     def stats(self):
-        stats_list = [self.width, self.height, self.health,  self.player_score, self.level, self.bullet_dmg,
-                              self.velocity, self.bullet_vel]
+        stats_dict = {'width': self.width, 'height': self.height, 'health': self.health,  'score': self.player_score, 'level': self.level, 'bullet_dmg': self.bullet_dmg,
+                              'vel': self.velocity, 'bullet vel':self.bullet_vel}
 
-        return stats_list
+        return stats_dict
 
     @classmethod
     def level_up_shoot_speed(cls):
