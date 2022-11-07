@@ -1,8 +1,8 @@
 import random, time
 import pygame.event
 from Classes import *
-from save import *
-from settings import *
+from Save import *
+from Settings import settings
 
 # ----------------------------------------------------------------------------------
 
@@ -173,8 +173,9 @@ def main_menu(fps=60, data_to_load=None):
 
         if start_button.draw(window):
             main(fps, data_to_load)
+            menu = False
         if settings_button.draw(window):
-            settings(data_to_load=None)
+            settings(data_to_load=data_to_load)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

@@ -1,5 +1,4 @@
 import os.path
-import pickle
 import pygame
 from pygame import mixer
 
@@ -162,9 +161,7 @@ class Player(Ship):
         stats_list = []
         stats_dict = {'width': self.width, 'height': self.height, 'health': self.health,  'score': self.player_score, 'level': self.level, 'bullet_dmg': self.bullet_dmg,
                               'vel': self.velocity, 'bullet vel':self.bullet_vel}
-        for key in stats_dict.keys():
-            stats_list.append(stats_dict[key])
-        return str(stats_list)
+        return str([val for val in stats_dict.values()])
 
     @classmethod
     def level_up_shoot_speed(cls):
@@ -258,5 +255,3 @@ class Button:
         window.blit(self.image, (self.rect.x, self.rect.y))
 
         return action
-
-

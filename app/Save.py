@@ -1,8 +1,10 @@
-from Main import *
+
+import Main, Classes
+import pygame, os
 
 def save_load(stats=None, fps=None, save_load_level = True):
 
-    main(run=False)
+    Main.main(run=False)
     
     pygame.display.set_caption("Settings")
     save_button_img = pygame.transform.scale(pygame.image.load(os.path.join
@@ -14,21 +16,21 @@ def save_load(stats=None, fps=None, save_load_level = True):
 
     while save_load_level:
 
-        window.blit(bg, (0, 0))
-        save_button = Button(window.get_width() / 2 - save_button_img.get_width() / 2, 400, save_button_img)
-        load_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 500, load_button_img)
-        clear_button = Button(window.get_width() / 2 - remove_button_img.get_width() / 2, 600, remove_button_img)
+        Main.window.blit(Main.bg, (0, 0))
+        save_button = Classes.Button(Main.window.get_width() / 2 - save_button_img.get_width() / 2, 400, save_button_img)
+        load_button = Classes.Button(Main.window.get_width() / 2 - load_button_img.get_width() / 2, 500, load_button_img)
+        clear_button = Classes.Button(Main.window.get_width() / 2 - remove_button_img.get_width() / 2, 600, remove_button_img)
 
-        if save_button.draw(window):
+        if save_button.draw(Main.window):
             save_data(stats=stats)
 
 
-        if load_button.draw(window):
+        if load_button.draw(Main.window):
             data = load_data(name=input(f'Name: '))
             print(data)
 
 
-        if clear_button.draw(window):
+        if clear_button.draw(Main.window):
             pass
 
         for event in pygame.event.get():
@@ -40,7 +42,7 @@ def save_load(stats=None, fps=None, save_load_level = True):
         clock = pygame.time.Clock()
         clock.tick(60)
 
-    return main(load=True, load_the_player=data, level=1)
+    return Main.main(load=True, load_the_player=data, level=1)
 
 
 def save_data(stats):
@@ -62,4 +64,5 @@ def load_data(name):
     except FileNotFoundError:
         print(f'{name[:-4]} does not exist, please try again')
 
+        
         
