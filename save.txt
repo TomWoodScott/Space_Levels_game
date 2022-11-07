@@ -1,0 +1,6 @@
+tom55, 40, 10, 0, 1, 1, 5, -20, 
+tom[, 55, 40, 10, 0, 1, 1, 5, -20]
+Tom:<bound method Player.stats of <Classes.Player object at 0x7fa2a54ab760>>
+Bob:<bound method Player.stats of <Classes.Player object at 0x7fa2a54ab760>>
+Jack:<bound method Player.stats of <Classes.Player object at 0x7f1211f56830>>
+Tom:[55, 40, 10, 0, 1, 1, 5, -20]
