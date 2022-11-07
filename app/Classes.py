@@ -159,10 +159,12 @@ class Player(Ship):
             self.power_bar = 0
 
     def stats(self):
+        stats_list = []
         stats_dict = {'width': self.width, 'height': self.height, 'health': self.health,  'score': self.player_score, 'level': self.level, 'bullet_dmg': self.bullet_dmg,
                               'vel': self.velocity, 'bullet vel':self.bullet_vel}
-
-        return stats_dict
+        for key in stats_dict.keys():
+            stats_list.append(stats_dict[key])
+        return str(stats_list)
 
     @classmethod
     def level_up_shoot_speed(cls):
@@ -258,16 +260,3 @@ class Button:
         return action
 
 
-class Save_Load_System:
-    def __init__(self, file_extension, save_folder):
-        self.file_extension = file_extension
-        self.save_folder = save_folder
-
-    def save_data(self, data, name):
-        data_file = open(self.save_folder + "/" + name + self.file_extension, 'wb')
-        pickle.dump(data, data_file)
-
-    def load_data(self, name):
-        data_file = open(self.save_folder + "/" + name + self.file_extension, 'rb')
-        data = pickle.load(data_file)
-        return data

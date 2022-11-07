@@ -1,6 +1,8 @@
-import pickle, random, time, json
+import random, time
 import pygame.event
 from Classes import *
+from save import *
+from settings import *
 
 # ----------------------------------------------------------------------------------
 
@@ -8,7 +10,7 @@ pygame.font.init()
 pygame.mixer.init()
 pygame.init()
 # constants
-WIDTH, HEIGHT = 400, 900
+WIDTH, HEIGHT = 400, 800
 
 WHITE, BLACK, RED, YELLOW, GREEN, GREY, GOLD = (255, 255, 255), (0, 0, 0), (255, 0, 0), (255, 255, 0), \
                                                (0, 255, 0), (69, 62, 49), (207, 172, 21)
@@ -69,7 +71,7 @@ def main(FPS=60, data_to_load=None, level=0, run = True):
 
         m_button = Button(5, HEIGHT - 80, m_button_img)
         if m_button.draw(window):
-            save_load(player.stats())
+            save_load(stats = player.stats())
 
         red_hp = pygame.draw.rect(window, RED, (WIDTH / 2 - 100, HEIGHT - 50, 200, 20))
         green_hp = pygame.draw.rect(window, GREEN,
@@ -184,113 +186,8 @@ def main_menu(fps=60, data_to_load=None):
         clock.tick(60)
 
 
-def settings(data_to_load=None, setting = True):
-    main(run=False)
-    pygame.display.set_caption("Settings")
-    easy_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                               ('Assets', 'easy_button.png')), (270, 90))
-    medium_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                                 ('Assets', 'medium_button.png')), (270, 90))
-    insane_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                                 ('Assets', 'insane_button.png')), (270, 90))
-    load_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                               ('Assets', 'load_button.png')), (270, 90))
-
-    while setting:
-
-        window.blit(bg, (0, 0))
-        easy_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 400, easy_button_img)
-        medium_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 500, medium_button_img)
-        insane_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 600, insane_button_img)
-        load_button = Button(window.get_width() / 2 - easy_button_img.get_width() / 2, 700, load_button_img)
-
-        if easy_button.draw(window):
-            fps = 60
-            setting = False
-        if medium_button.draw(window):
-            fps = 100
-            setting = False
-        if insane_button.draw(window):
-            fps = 200
-            setting = False
-        if load_button.draw(window):
-            name = input(f'Please enter user name: ') + '.pkl'
-            try:
-                with open(name, 'rb') as load_game:
-                    data = pickle.load(load_game)
-                    main_menu(data_to_load=data)
-            except FileNotFoundError:
-                print(f'{name[:-4]} is not a save file')
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                setting = False
-                pygame.quit()
-
-        pygame.display.update()
-        clock = pygame.time.Clock()
-        clock.tick(60)
-
-    return main_menu(fps, data_to_load)
 
 
-def save_load(stats=None, fps=None, save_load_level = True):
-
-    main(run=False)
-    
-    pygame.display.set_caption("Settings")
-    save_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                               ('Assets', 'save_button.png')), (270, 90))
-    load_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                               ('Assets', 'load_button.png')), (270, 90))
-    remove_button_img = pygame.transform.scale(pygame.image.load(os.path.join
-                                                               ('Assets', 'remove_button.png')), (270, 90))
-
-    while save_load_level:
-
-        window.blit(bg, (0, 0))
-        save_button = Button(window.get_width() / 2 - save_button_img.get_width() / 2, 400, save_button_img)
-        load_button = Button(window.get_width() / 2 - load_button_img.get_width() / 2, 500, load_button_img)
-        clear_button = Button(window.get_width() / 2 - remove_button_img.get_width() / 2, 600, remove_button_img)
-#        i, j = 0, 0
-        if save_button.draw(window):
-#       if i == 0:
-#       i += 1
-            name = input('Please enter user name: ')
-            stats['name'] = name
-            print(stats)
-            with open('save.json', 'w') as save_game:
-                json.dump(stats, save_game, indent=4)
-
-        if load_button.draw(window):
-#            if j == 0:
-            name = input(f'Please enter user name: ')
-            try:
-                with open(name, 'r') as load_game:
-                    data = json.load(load_game)
-                    main_menu(data_to_load=data)
-            except FileNotFoundError:
-                print(f'{name[:-4]} does not exist, please try again')
-#                j += 1
-
-        if clear_button.draw(window):
-            name = input(f'Please enter the user you would like to clear: ') + '.pkl'
-            try:
-                with open(name, 'rb') as file:
-                    file.close()
-            except FileNotFoundError:
-                print(f'{name[:-4]} does not exist, please try again')
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                save_load_level = False
-                pygame.quit()
-
-        pygame.display.update()
-        clock = pygame.time.Clock()
-        clock.tick(60)
-
-    return main(load=True, load_the_player=data, level=1)
 
 
 if __name__ == '__main__':
